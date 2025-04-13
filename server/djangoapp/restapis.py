@@ -42,9 +42,25 @@ def get_request(endpoint, **kwargs):
         print("Network exception occurred: ", str(e))
         return {"error": str(e)}
 
-# def analyze_review_sentiments(text):
-# request_url = sentiment_analyzer_url+"analyze/"+text
-# Add code for retrieving sentiments
+def analyze_review_sentiments(text):
+    """
+    分析评论的情感
+    
+    Args:
+        text (str): 要分析的评论文本
+    
+    Returns:
+        dict: 情感分析结果
+    """
+    request_url = sentiment_analyzer_url + text
+    try:
+        # 调用requests库的get方法，传入URL
+        response = requests.get(request_url)
+        return response.json()
+    except Exception as err:
+        print(f"Unexpected {err=}, {type(err)=}")
+        print("Network exception occurred")
+        return {"error": str(err)}
 
 # def post_review(data_dict):
 # Add code for posting review
