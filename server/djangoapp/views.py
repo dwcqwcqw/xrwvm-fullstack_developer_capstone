@@ -12,6 +12,7 @@ import logging
 import json
 from .models import CarMake, CarModel
 from .populate import initiate
+from .restapis import get_request
 
 
 # Get an instance of a logger
@@ -115,17 +116,8 @@ def registration(request):
 def get_dealer_reviews(request, dealer_id):
     if request.method == "GET":
         try:
-            # 这里应该从数据库或外部 API 获取评论数据
-            # 目前返回模拟数据
-            reviews = [
-                {
-                    "id": 1,
-                    "dealerId": dealer_id,
-                    "review": "Great service!",
-                    "rating": 5,
-                    "date": "2024-04-13"
-                }
-            ]
+            # 使用get_request函数获取评论数据
+            reviews = get_request("/api/review", dealerId=dealer_id)
             return JsonResponse({"reviews": reviews})
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
@@ -134,16 +126,8 @@ def get_dealer_reviews(request, dealer_id):
 def get_dealers(request):
     if request.method == "GET":
         try:
-            # 这里应该从数据库或外部 API 获取经销商数据
-            # 目前返回模拟数据
-            dealers = [
-                {
-                    "id": 1,
-                    "name": "Best Cars Dealer",
-                    "state": "California",
-                    "address": "123 Main St"
-                }
-            ]
+            # 使用get_request函数获取经销商数据
+            dealers = get_request("/api/dealership")
             return JsonResponse({"dealers": dealers})
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
@@ -152,14 +136,8 @@ def get_dealers(request):
 def get_dealer_by_id(request, dealer_id):
     if request.method == "GET":
         try:
-            # 这里应该从数据库或外部 API 获取经销商数据
-            # 目前返回模拟数据
-            dealer = {
-                "id": dealer_id,
-                "name": "Best Cars Dealer",
-                "state": "California",
-                "address": "123 Main St"
-            }
+            # 使用get_request函数获取特定经销商数据
+            dealer = get_request("/api/dealership", dealerId=dealer_id)
             return JsonResponse(dealer)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
@@ -168,16 +146,8 @@ def get_dealer_by_id(request, dealer_id):
 def get_dealers_by_state(request, state):
     if request.method == "GET":
         try:
-            # 这里应该从数据库或外部 API 获取经销商数据
-            # 目前返回模拟数据
-            dealers = [
-                {
-                    "id": 1,
-                    "name": "Best Cars Dealer",
-                    "state": state,
-                    "address": "123 Main St"
-                }
-            ]
+            # 使用get_request函数获取特定州的经销商数据
+            dealers = get_request("/api/dealership", state=state)
             return JsonResponse({"dealers": dealers})
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
