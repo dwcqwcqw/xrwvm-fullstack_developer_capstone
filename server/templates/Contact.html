@@ -1,0 +1,162 @@
+<html>
+<head>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/bootstrap.min.css">
+  <style>
+    .contact-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .contact-header {
+      background-color: #f8f9fa;
+      padding: 40px;
+      border-radius: 10px;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+    .contact-header h1 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+    .contact-header p {
+      color: #34495e;
+      font-size: 1.1em;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .contact-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      justify-content: center;
+    }
+    .contact-card {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      flex: 1;
+      min-width: 300px;
+      max-width: 400px;
+      transition: transform 0.3s ease;
+    }
+    .contact-card:hover {
+      transform: translateY(-5px);
+    }
+    .contact-card h2 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+      font-size: 1.5em;
+    }
+    .contact-card p {
+      color: #34495e;
+      margin-bottom: 15px;
+      line-height: 1.6;
+    }
+    .contact-card i {
+      color: #3498db;
+      margin-right: 10px;
+    }
+    .map-container {
+      margin-top: 40px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .business-hours {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 30px;
+    }
+    .business-hours h3 {
+      color: #2c3e50;
+      margin-bottom: 15px;
+    }
+    .business-hours p {
+      color: #34495e;
+      margin-bottom: 10px;
+    }
+    @media (max-width: 768px) {
+      .contact-header {
+        padding: 20px;
+      }
+      .contact-card {
+        min-width: 250px;
+      }
+    }
+  </style>
+</head>
+<div>
+  <nav class="navbar navbar-expand-lg navbar-light" style="background-color: #2c3e50; height: 1in;">
+    <div class="container-fluid">
+      <h2 style="padding-right: 5%; color: white;">Best Cars</h2>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarText">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link" style="font-size: larger; color: white;" aria-current="page" href="/">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" style="font-size: larger; color: white;" href="/about">About Us</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" style="font-size: larger; color: white;" href="/contact">Contact Us</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="contact-container">
+    <div class="contact-header">
+      <h1>Contact Us</h1>
+      <p>We're here to help! Whether you have questions about our vehicles, need assistance with financing, or want to schedule a test drive, our team is ready to assist you.</p>
+    </div>
+
+    <div class="contact-info">
+      <div class="contact-card">
+        <h2>Visit Us</h2>
+        <p><i class="fas fa-map-marker-alt"></i> 1234 Auto Drive, Suite 100</p>
+        <p>San Francisco, CA 94105</p>
+        <p>United States</p>
+      </div>
+
+      <div class="contact-card">
+        <h2>Get in Touch</h2>
+        <p><i class="fas fa-phone"></i> +1 (415) 555-0123</p>
+        <p><i class="fas fa-envelope"></i> info@bestcars.com</p>
+        <p><i class="fas fa-fax"></i> +1 (415) 555-0124</p>
+      </div>
+
+      <div class="contact-card">
+        <h2>Follow Us</h2>
+        <p><i class="fab fa-facebook"></i> facebook.com/bestcars</p>
+        <p><i class="fab fa-twitter"></i> @bestcars</p>
+        <p><i class="fab fa-instagram"></i> @bestcars_official</p>
+      </div>
+    </div>
+
+    <div class="business-hours">
+      <h3>Business Hours</h3>
+      <p>Monday - Friday: 9:00 AM - 8:00 PM</p>
+      <p>Saturday: 10:00 AM - 6:00 PM</p>
+      <p>Sunday: 11:00 AM - 5:00 PM</p>
+    </div>
+
+    <div class="map-container">
+      <iframe 
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.1556500000003!2d-122.4194!3d37.7749!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8085809c6c8f4459%3A0xb10ed6d9b5050fa5!2sSan%20Francisco%2C%20CA!5e0!3m2!1sen!2sus!4v1234567890"
+        width="100%" 
+        height="450" 
+        style="border:0;" 
+        allowfullscreen="" 
+        loading="lazy">
+      </iframe>
+    </div>
+  </div>
+</div>
+</html> 

@@ -1,0 +1,139 @@
+<html>
+<head>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/bootstrap.min.css">
+  <style>
+    .team-member {
+      transition: transform 0.3s ease;
+      margin: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      flex: 1;
+      min-width: 300px;
+      max-width: 400px;
+    }
+    .team-member:hover {
+      transform: translateY(-5px);
+    }
+    .team-member img {
+      width: 100%;
+      height: auto;
+      object-fit: cover;
+      aspect-ratio: 1/1;
+    }
+    .title {
+      color: #2c3e50;
+      font-weight: bold;
+      font-size: 1.2em;
+      margin-top: 10px;
+    }
+    .position {
+      color: #3498db;
+      font-style: italic;
+    }
+    .email {
+      color: #7f8c8d;
+      font-size: 0.9em;
+    }
+    .banner {
+      background-color: #f8f9fa;
+      padding: 30px;
+      border-radius: 5px;
+      margin-bottom: 30px;
+    }
+    .banner h1 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+    .banner p {
+      color: #34495e;
+      font-size: 1.1em;
+      line-height: 1.6;
+    }
+    .team-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+    }
+    .card-body {
+      padding: 20px;
+    }
+    .card-text {
+      min-height: 80px;
+    }
+    @media (max-width: 768px) {
+      .team-member {
+        min-width: 250px;
+      }
+      .banner {
+        padding: 20px;
+      }
+      .banner h1 {
+        font-size: 1.8em;
+      }
+    }
+  </style>
+</head>
+<div>
+  <nav class="navbar navbar-expand-lg navbar-light" style="background-color: #2c3e50; height: 1in;">
+    <div class="container-fluid">
+      <h2 style="padding-right: 5%; color: white;">Best Cars</h2>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarText">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link" style="font-size: larger; color: white;" aria-current="page" href="/">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" style="font-size: larger; color: white;" href="/about">About Us</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" style="font-size: larger; color: white;" href="/contact">Contact Us</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  
+  <div class="card" style="width: 90%; max-width: 1200px; margin: auto; margin-top: 5%; border: none;">
+    <div class="banner" name="about-header">
+      <h1>About Best Cars</h1>
+      <p>Welcome to Best Cars, your premier destination for quality vehicles in North America. With over 20 years of experience in the automotive industry, we pride ourselves on offering an exceptional selection of both domestic and imported vehicles at competitive prices. Our commitment to customer satisfaction and transparent business practices has made us a trusted name in the automotive community.</p>
+    </div>
+    <div class="team-container">
+      <div class="card team-member">
+        <img class="card-img-top" src="/static/person1.jpeg" alt="Sarah Johnson">
+        <div class="card-body">
+          <p class="title">Sarah Johnson</p>
+          <p class="position">General Manager</p>
+          <p class="card-text">With 15 years of experience in automotive sales and management, Sarah leads our team with expertise and dedication. Her focus on customer satisfaction has helped build our reputation as a trusted dealership.</p>
+          <p class="email">sarah.johnson@bestcars.com</p>
+        </div>
+      </div>
+
+      <div class="card team-member">
+        <img class="card-img-top" src="/static/person2.jpeg" alt="Michael Chen">
+        <div class="card-body">
+          <p class="title">Michael Chen</p>
+          <p class="position">Sales Director</p>
+          <p class="card-text">Michael brings a wealth of knowledge in both domestic and international vehicle markets. His expertise in customer relations and market analysis drives our sales success.</p>
+          <p class="email">michael.chen@bestcars.com</p>
+        </div>
+      </div>
+
+      <div class="card team-member">
+        <img class="card-img-top" src="/static/person3.jpeg" alt="Emily Rodriguez">
+        <div class="card-body">
+          <p class="title">Emily Rodriguez</p>
+          <p class="position">Customer Service Manager</p>
+          <p class="card-text">Emily ensures every customer receives exceptional service. Her attention to detail and commitment to excellence has earned her numerous customer service awards.</p>
+          <p class="email">emily.rodriguez@bestcars.com</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</html>
