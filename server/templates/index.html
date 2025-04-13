@@ -1,0 +1,12 @@
+                    <li class="nav-item">
+                        <a class="nav-link" style="font-size: larger; color: white;" href="/contact">Contact Us</a>
+                    </li>
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" style="font-size: larger; color: white;" href="/logout">Logout</a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" style="font-size: larger; color: white;" href="/login">Login</a>
+                    </li>
+                    {% endif %} 
