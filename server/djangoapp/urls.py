@@ -14,6 +14,13 @@ urlpatterns = [
     path('register/', views.registration, name='register'),
     
     # path for dealer reviews view
+    path('fetchReviews/dealer/<int:dealer_id>/', views.get_dealer_reviews, name='dealer_reviews'),
+    # path for dealers
+    path('fetchDealers/', views.get_dealers, name='get_dealers'),
+    # path for dealer by id
+    path('fetchDealer/<int:dealer_id>/', views.get_dealer_by_id, name='dealer_by_id'),
+    # path for dealers by state
+    path('fetchDealers/<str:state>/', views.get_dealers_by_state, name='dealers_by_state'),
 
     # path for add a review view
 

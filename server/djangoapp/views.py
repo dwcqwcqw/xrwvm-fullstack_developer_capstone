@@ -109,3 +109,74 @@ def registration(request):
             return JsonResponse({"error": "Registration failed"}, status=400)
     else:
         return render(request, 'register.html')
+
+# Get dealer reviews by dealer id
+def get_dealer_reviews(request, dealer_id):
+    if request.method == "GET":
+        try:
+            # 这里应该从数据库或外部 API 获取评论数据
+            # 目前返回模拟数据
+            reviews = [
+                {
+                    "id": 1,
+                    "dealerId": dealer_id,
+                    "review": "Great service!",
+                    "rating": 5,
+                    "date": "2024-04-13"
+                }
+            ]
+            return JsonResponse({"reviews": reviews})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+# Get all dealers
+def get_dealers(request):
+    if request.method == "GET":
+        try:
+            # 这里应该从数据库或外部 API 获取经销商数据
+            # 目前返回模拟数据
+            dealers = [
+                {
+                    "id": 1,
+                    "name": "Best Cars Dealer",
+                    "state": "California",
+                    "address": "123 Main St"
+                }
+            ]
+            return JsonResponse({"dealers": dealers})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+# Get dealer by id
+def get_dealer_by_id(request, dealer_id):
+    if request.method == "GET":
+        try:
+            # 这里应该从数据库或外部 API 获取经销商数据
+            # 目前返回模拟数据
+            dealer = {
+                "id": dealer_id,
+                "name": "Best Cars Dealer",
+                "state": "California",
+                "address": "123 Main St"
+            }
+            return JsonResponse(dealer)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+# Get dealers by state
+def get_dealers_by_state(request, state):
+    if request.method == "GET":
+        try:
+            # 这里应该从数据库或外部 API 获取经销商数据
+            # 目前返回模拟数据
+            dealers = [
+                {
+                    "id": 1,
+                    "name": "Best Cars Dealer",
+                    "state": state,
+                    "address": "123 Main St"
+                }
+            ]
+            return JsonResponse({"dealers": dealers})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)

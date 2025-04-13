@@ -1,0 +1,32 @@
+services:
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./server:/app
+      - ./server/staticfiles:/app/staticfiles
+    environment:
+      - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=djangoproj.settings
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      - frontend
+
+  frontend:
+    build:
+      context: ./server/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./server/frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_API_URL=http://localhost:8000
+    command: npm start 
