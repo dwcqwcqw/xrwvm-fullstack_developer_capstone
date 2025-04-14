@@ -82,24 +82,41 @@ def logout_request(request):
 def registration(request):
     if request.method == "POST":
         try:
-            data = json.loads(request.body)
-            username = data['userName']
-            password = data['password']
-            email = data.get('email', '')
+            # 尝试解析JSON数据
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+                username = data.get('userName')
+                password = data.get('password')
+                email = data.get('email', '')
+            else:
+                # 处理表单数据
+                username = request.POST.get('username')
+                password = request.POST.get('password')
+                email = request.POST.get('email', '')
+
+            if not username or not password:
+                return JsonResponse({
+                    "error": "Username and password are required"
+                }, status=400)
             
-            # Check if user already exists
+            # 检查用户名是否已存在
             if User.objects.filter(username=username).exists():
-                return JsonResponse({"userName": username, "error": "Already Registered"}, status=400)
+                return JsonResponse({
+                    "error": "Already Registered"
+                }, status=400)
             
-            # Create user
+            # 创建用户
             user = User.objects.create_user(
                 username=username,
                 password=password,
                 email=email
             )
             
-            # Login the user
+            # 登录用户
             login(request, user)
+            
+            # 设置session
+            request.session['username'] = username
             
             return JsonResponse({
                 "userName": username,
@@ -107,12 +124,19 @@ def registration(request):
             })
             
         except json.JSONDecodeError:
-            return JsonResponse({"error": "Invalid JSON data"}, status=400)
+            logger.error("Invalid JSON data in registration request")
+            return JsonResponse({
+                "error": "Invalid JSON data"
+            }, status=400)
         except Exception as e:
             logger.error(f"Registration error: {str(e)}")
-            return JsonResponse({"error": "Registration failed"}, status=400)
+            return JsonResponse({
+                "error": str(e)
+            }, status=400)
     else:
-        return render(request, 'register.html')
+        return JsonResponse({
+            "error": "Only POST method is allowed"
+        }, status=405)
 
 # Get dealer reviews by dealer id
 def get_dealer_reviews(request, dealer_id):
@@ -142,14 +166,35 @@ def get_dealer_reviews(request, dealer_id):
 def get_dealers(request):
     try:
         logger.info("Fetching all dealers")
-        dealers = get_dealers_from_cf()
-        logger.info(f"Retrieved {len(dealers) if dealers else 0} dealers")
         
-        if dealers is None:
-            logger.warning("No dealers found or API returned None")
-            return JsonResponse({"status": "success", "dealers": []})
+        # Check if there are any dealers in the database
+        if Dealer.objects.count() == 0:
+            logger.info("No dealers found in database, populating with sample data")
+            populate_dealers()
             
-        return JsonResponse({"status": "success", "dealers": dealers})
+        # Get all dealers from database
+        dealers = Dealer.objects.all()
+        dealers_data = []
+        
+        for dealer in dealers:
+            dealers_data.append({
+                "id": dealer.id,
+                "full_name": dealer.full_name,
+                "city": dealer.city,
+                "state": dealer.state,
+                "address": dealer.address,
+                "zip": dealer.zip,
+                "web": dealer.web,
+                "lat": float(dealer.lat),
+                "long": float(dealer.long)
+            })
+            
+        logger.info(f"Retrieved {len(dealers_data)} dealers")
+        response = JsonResponse({"status": 200, "dealers": dealers_data})
+        response["Content-Type"] = "application/json"
+        response["Access-Control-Allow-Origin"] = "http://localhost:3000"
+        response["Access-Control-Allow-Credentials"] = "true"
+        return response
         
     except Exception as e:
         logger.error(f"Error in get_dealers: {str(e)}")
@@ -173,17 +218,26 @@ def get_dealer_by_id(request, dealer_id):
 def get_dealers_by_state(request, state):
     try:
         logger.info(f"Fetching dealers for state: {state}")
-        dealers = get_dealers_from_cf()
         
-        if dealers is None:
-            logger.warning(f"No dealers found for state {state}")
-            return JsonResponse({"status": "success", "dealers": []})
+        # Get dealers filtered by state
+        dealers = Dealer.objects.filter(state__iexact=state)
+        dealers_data = []
+        
+        for dealer in dealers:
+            dealers_data.append({
+                "id": dealer.id,
+                "full_name": dealer.full_name,
+                "city": dealer.city,
+                "state": dealer.state,
+                "address": dealer.address,
+                "zip": dealer.zip,
+                "web": dealer.web,
+                "lat": float(dealer.lat),
+                "long": float(dealer.long)
+            })
             
-        # Filter dealers by state
-        state_dealers = [dealer for dealer in dealers if dealer["state"].lower() == state.lower()]
-        logger.info(f"Found {len(state_dealers)} dealers in state {state}")
-        
-        return JsonResponse({"status": "success", "dealers": state_dealers})
+        logger.info(f"Found {len(dealers_data)} dealers in state {state}")
+        return JsonResponse({"status": 200, "dealers": dealers_data})
         
     except Exception as e:
         logger.error(f"Error in get_dealers_by_state for state {state}: {str(e)}")

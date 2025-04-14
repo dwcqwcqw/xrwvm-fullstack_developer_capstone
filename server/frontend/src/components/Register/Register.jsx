@@ -1,91 +1,129 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Register.css";
-import user_icon from "../assets/person.png"
-import email_icon from "../assets/email.png"
-import password_icon from "../assets/password.png"
-import close_icon from "../assets/close.png"
-import Header from '../Header/Header';
+import user_icon from "../assets/person.png";
+import email_icon from "../assets/email.png";
+import password_icon from "../assets/password.png";
 
 const Register = () => {
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
-
-  const gohome = ()=> {
-    window.location.href = window.location.origin;
-  }
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const register = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    let register_url = window.location.origin+"/api/register/";
-    
     try {
-      const res = await fetch(register_url, {
-          method: "POST",
-          headers: {
-              "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-              "userName": userName,
-              "password": password,
-              "email": email
-          }),
+      const res = await fetch("/djangoapp/register/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          userName,
+          password,
+          email
+        }),
       });
 
-      const json = await res.json();
-      if (json.status === "Authenticated") {
-          sessionStorage.setItem('username', json.userName);
-          window.location.href = window.location.origin;
-      } else {
-          if (json.error === "Already Registered") {
-              alert("This username is already registered. Please try another one.");
-          } else {
-              alert("Registration failed: " + (json.error || "Unknown error"));
-          }
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('Registration failed:', text);
+        throw new Error(`Registration failed: ${res.status} ${res.statusText}`);
       }
-    } catch (error) {
-      console.error('Error:', error);
-      alert("An error occurred during registration. Please try again later.");
+
+      const data = await res.json();
+      if (data.status === "Authenticated") {
+        sessionStorage.setItem('username', data.userName);
+        navigate('/');
+        window.location.reload();
+      } else {
+        if (data.error === "Already Registered") {
+          setError("This username is already registered. Please try another one.");
+        } else {
+          setError(data.error || "Registration failed. Please try again.");
+        }
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      setError("An error occurred during registration. Please try again later.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  return(
-    <div>
-      <Header />
-      <div className="register_container" style={{width: "50%"}}>
-        <div className="header" style={{display: "flex",flexDirection: "row", justifyContent: "space-between"}}>
-            <span className="text" style={{flexGrow:"1"}}>Register</span> 
-            <div style={{display: "flex",flexDirection: "row", justifySelf: "end", alignSelf: "start" }}>
-            <a href="/" onClick={()=>{gohome()}} style={{justifyContent: "space-between", alignItems:"flex-end"}}>
-              <img style={{width:"1cm"}} src={close_icon} alt="X"/>
-            </a>
-            </div>
-            <hr/>
+  return (
+    <div className="register-container">
+      <div className="register-box">
+        <h2>Create Account</h2>
+        <p className="subtitle">Please fill in the details to register</p>
+
+        {error && (
+          <div className="alert alert-danger" role="alert">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={register}>
+          <div className="input-group">
+            <img src={user_icon} alt="Username" className="input-icon" />
+            <input
+              type="text"
+              placeholder="Username"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              required
+              className="form-input"
+              minLength="3"
+            />
           </div>
 
-          <form onSubmit={register}>
-          <div className="inputs">
-            <div className="input">
-              <img src={user_icon} className="img_icon" alt='Username'/>
-              <input type="text" name="username" placeholder="Username" className="input_field" onChange={(e) => setUserName(e.target.value)} required/>
-            </div>
-            <div className="input">
-              <img src={email_icon} className="img_icon" alt='Email'/>
-              <input type="email" name="email" placeholder="Email" className="input_field" onChange={(e) => setEmail(e.target.value)} required/>
-            </div>
-            <div className="input">
-              <img src={password_icon} className="img_icon" alt='password'/>
-              <input name="psw" type="password" placeholder="Password" className="input_field" onChange={(e) => setPassword(e.target.value)} required/>
-            </div>
+          <div className="input-group">
+            <img src={email_icon} alt="Email" className="input-icon" />
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="form-input"
+            />
           </div>
-          <div className="submit_panel">
-            <input className="submit" type="submit" value="Register"/>
+
+          <div className="input-group">
+            <img src={password_icon} alt="Password" className="input-icon" />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="form-input"
+              minLength="6"
+            />
           </div>
+
+          <button
+            type="submit"
+            className="register-button"
+            disabled={loading}
+          >
+            {loading ? 'Creating Account...' : 'Create Account'}
+          </button>
         </form>
+
+        <div className="login-link">
+          Already have an account? <a href="/login">Sign in</a>
         </div>
+      </div>
     </div>
-  )
-}
+  );
+};
 
 export default Register; 

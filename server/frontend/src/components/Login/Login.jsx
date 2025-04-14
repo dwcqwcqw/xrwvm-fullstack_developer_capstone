@@ -1,72 +1,107 @@
 import React, { useState } from 'react';
-
+import { useNavigate } from 'react-router-dom';
 import "./Login.css";
-import Header from '../Header/Header';
+import user_icon from "../assets/person.png";
+import password_icon from "../assets/password.png";
 
-const Login = ({ onClose }) => {
-
+const Login = () => {
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
-  const [open,setOpen] = useState(true)
-
-  let login_url = window.location.origin+"/djangoapp/login";
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const login = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    const res = await fetch(login_url, {
+    try {
+      const res = await fetch("/djangoapp/login/", {
         method: "POST",
         headers: {
-            "Content-Type": "application/json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
         },
         body: JSON.stringify({
-            "userName": userName,
-            "password": password
+          userName,
+          password
         }),
-    });
-    
-    const json = await res.json();
-    if (json.status != null && json.status === "Authenticated") {
-        sessionStorage.setItem('username', json.userName);
-        setOpen(false);        
-    }
-    else {
-      alert("The user could not be authenticated.")
-    }
-};
+      });
 
-  if (!open) {
-    window.location.href = "/";
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('Login failed:', text);
+        throw new Error(`Login failed: ${res.status} ${res.statusText}`);
+      }
+
+      const data = await res.json();
+      
+      if (data.status === "Authenticated") {
+        sessionStorage.setItem('username', data.userName);
+        navigate('/');
+        window.location.reload();
+      } else {
+        setError("Invalid username or password");
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError("An error occurred during login. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
-  
 
   return (
-    <div>
-      <Header/>
-    <div onClick={onClose}>
-      <div
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-        className='modalContainer'
-      >
-          <form className="login_panel" style={{}} onSubmit={login}>
-              <div>
-              <span className="input_field">Username </span>
-              <input type="text"  name="username" placeholder="Username" className="input_field" onChange={(e) => setUserName(e.target.value)}/>
-              </div>
-              <div>
-              <span className="input_field">Password </span>
-              <input name="psw" type="password"  placeholder="Password" className="input_field" onChange={(e) => setPassword(e.target.value)}/>            
-              </div>
-              <div>
-              <input className="action_button" type="submit" value="Login"/>
-              <input className="action_button" type="button" value="Cancel" onClick={()=>setOpen(false)}/>
-              </div>
-              <a className="loginlink" href="/register">Register Now</a>
-          </form>
+    <div className="login-container">
+      <div className="login-box">
+        <h2>Welcome Back</h2>
+        <p className="subtitle">Please sign in to continue</p>
+        
+        {error && (
+          <div className="alert alert-danger" role="alert">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={login}>
+          <div className="input-group">
+            <img src={user_icon} alt="Username" className="input-icon" />
+            <input
+              type="text"
+              placeholder="Username"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              required
+              className="form-input"
+            />
+          </div>
+
+          <div className="input-group">
+            <img src={password_icon} alt="Password" className="input-icon" />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="form-input"
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            className="login-button" 
+            disabled={loading}
+          >
+            {loading ? 'Signing in...' : 'Sign In'}
+          </button>
+        </form>
+
+        <div className="register-link">
+          Don't have an account? <a href="/register">Register now</a>
+        </div>
       </div>
-    </div>
     </div>
   );
 };

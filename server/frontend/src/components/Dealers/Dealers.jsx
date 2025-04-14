@@ -8,18 +8,26 @@ const Dealers = () => {
   const [states, setStates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedState, setSelectedState] = useState("All");
 
-  const dealer_url = "/djangoapp/get_dealers/";
+  const BACKEND_URL = "http://localhost:8000";
+  const dealer_url = `${BACKEND_URL}/djangoapp/get_dealers/`;
   
   const filterDealers = async (state) => {
+    setSelectedState(state);
     setLoading(true);
     try {
       let url = dealer_url;
       if (state && state !== "All") {
-        url = `/djangoapp/get_dealers/${state}/`;
+        url = `${BACKEND_URL}/djangoapp/get_dealers/${state}/`;
       }
       console.log('Fetching from URL:', url);
-      const res = await fetch(url);
+      const res = await fetch(url, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
       console.log('Response status:', res.status);
       console.log('Response headers:', res.headers);
       
@@ -51,7 +59,12 @@ const Dealers = () => {
     setLoading(true);
     try {
       console.log('Fetching all dealers from:', dealer_url);
-      const res = await fetch(dealer_url);
+      const res = await fetch(dealer_url, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
       console.log('Response status:', res.status);
       console.log('Response headers:', res.headers);
       
@@ -135,6 +148,7 @@ const Dealers = () => {
                 name="state" 
                 id="state" 
                 className="form-select"
+                value={selectedState}
                 onChange={(e) => filterDealers(e.target.value)}
               >
                 <option value="All">All States</option>
