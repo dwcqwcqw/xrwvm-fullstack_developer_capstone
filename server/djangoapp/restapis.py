@@ -4,6 +4,8 @@ import os
 from dotenv import load_dotenv
 import requests
 import json
+from .models import CarDealer
+from requests.auth import HTTPBasicAuth
 
 load_dotenv()
 
@@ -17,27 +19,96 @@ sentiment_analyzer_url = os.getenv(
     default="http://sentiment_analyzer:8080")
 
 def get_request(url, **kwargs):
-    """
-    Send GET request to the specified endpoint
-    
-    Args:
-        url (str): The endpoint URL
-        **kwargs: Additional parameters for the request
-    
-    Returns:
-        dict: Response data
-    """
+    """Send GET request to the specified URL."""
     try:
-        # 确保URL是完整的
-        if not url.startswith('http'):
-            url = f"{backend_url}{url}"
-        print(f"Sending GET request to: {url}")
-        response = requests.get(url, **kwargs)
-        response.raise_for_status()
+        response = requests.get(
+            url,
+            headers={'Content-Type': 'application/json'},
+            **kwargs
+        )
         return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"Network exception occurred: {str(e)}")
+    except Exception as e:
+        print(f"Error: {e}")
         return None
+
+
+def post_request(url, payload, **kwargs):
+    """Send POST request to the specified URL."""
+    try:
+        response = requests.post(
+            url,
+            headers={'Content-Type': 'application/json'},
+            json=payload,
+            **kwargs
+        )
+        return response.json()
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+
+
+def get_dealers_from_cf(url, **kwargs):
+    """Get dealers data from the specified URL."""
+    results = get_request(url, **kwargs)
+    if results:
+        dealers = []
+        for dealer in results:
+            dealer_obj = CarDealer(
+                id=dealer.get("id"),
+                city=dealer.get("city"),
+                state=dealer.get("state"),
+                st=dealer.get("st"),
+                address=dealer.get("address"),
+                zip=dealer.get("zip"),
+                lat=dealer.get("lat"),
+                long=dealer.get("long"),
+                short_name=dealer.get("short_name"),
+                full_name=dealer.get("full_name")
+            )
+            dealers.append(dealer_obj)
+        return dealers
+    return []
+
+
+def get_dealer_by_id_from_cf(url, dealerId):
+    """Get dealer details by ID from the specified URL."""
+    results = get_request(f"{url}/{dealerId}")
+    if results:
+        dealer = CarDealer(
+            id=results.get("id"),
+            city=results.get("city"),
+            state=results.get("state"),
+            st=results.get("st"),
+            address=results.get("address"),
+            zip=results.get("zip"),
+            lat=results.get("lat"),
+            long=results.get("long"),
+            short_name=results.get("short_name"),
+            full_name=results.get("full_name")
+        )
+        return dealer
+    return None
+
+
+def get_dealer_reviews_from_cf(url, dealerId):
+    """Get dealer reviews from the specified URL."""
+    results = get_request(f"{url}?dealerId={dealerId}")
+    if results:
+        reviews = []
+        for review in results:
+            reviews.append({
+                "id": review.get("id"),
+                "name": review.get("name"),
+                "dealership": review.get("dealership"),
+                "review": review.get("review"),
+                "purchase": review.get("purchase"),
+                "purchase_date": review.get("purchase_date"),
+                "car_make": review.get("car_make"),
+                "car_model": review.get("car_model"),
+                "car_year": review.get("car_year")
+            })
+        return reviews
+    return []
 
 def analyze_review_sentiments(text):
     """
