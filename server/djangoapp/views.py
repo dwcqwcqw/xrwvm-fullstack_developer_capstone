@@ -10,9 +10,11 @@ from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
 import logging
 import json
-from .models import CarMake, CarModel
+from .models import CarMake, CarModel, Dealer
 from .populate import initiate
-from .restapis import get_request, analyze_review_sentiments, post_review
+from .populate_dealers import populate_dealers
+from .restapis import get_request, analyze_review_sentiments, post_review, get_dealers_from_cf
+from django.views.decorators.http import require_http_methods
 
 
 # Get an instance of a logger
@@ -136,14 +138,25 @@ def get_dealer_reviews(request, dealer_id):
         return JsonResponse({"status":400,"message":"Bad Request"})
 
 # Get all dealers
+@require_http_methods(["GET"])
 def get_dealers(request):
-    if request.method == "GET":
-        try:
-            # 使用get_request函数获取经销商数据
-            dealers = get_request("/api/dealership")
-            return JsonResponse({"dealers": dealers})
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+    try:
+        logger.info("Fetching all dealers")
+        dealers = get_dealers_from_cf()
+        logger.info(f"Retrieved {len(dealers) if dealers else 0} dealers")
+        
+        if dealers is None:
+            logger.warning("No dealers found or API returned None")
+            return JsonResponse({"status": "success", "dealers": []})
+            
+        return JsonResponse({"status": "success", "dealers": dealers})
+        
+    except Exception as e:
+        logger.error(f"Error in get_dealers: {str(e)}")
+        return JsonResponse(
+            {"status": "error", "message": "Failed to fetch dealers", "error": str(e)},
+            status=500
+        )
 
 # Get dealer by id
 def get_dealer_by_id(request, dealer_id):
@@ -156,14 +169,28 @@ def get_dealer_by_id(request, dealer_id):
             return JsonResponse({"error": str(e)}, status=500)
 
 # Get dealers by state
+@require_http_methods(["GET"])
 def get_dealers_by_state(request, state):
-    if request.method == "GET":
-        try:
-            # 使用get_request函数获取特定州的经销商数据
-            dealers = get_request("/api/dealership", state=state)
-            return JsonResponse({"dealers": dealers})
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+    try:
+        logger.info(f"Fetching dealers for state: {state}")
+        dealers = get_dealers_from_cf()
+        
+        if dealers is None:
+            logger.warning(f"No dealers found for state {state}")
+            return JsonResponse({"status": "success", "dealers": []})
+            
+        # Filter dealers by state
+        state_dealers = [dealer for dealer in dealers if dealer["state"].lower() == state.lower()]
+        logger.info(f"Found {len(state_dealers)} dealers in state {state}")
+        
+        return JsonResponse({"status": "success", "dealers": state_dealers})
+        
+    except Exception as e:
+        logger.error(f"Error in get_dealers_by_state for state {state}: {str(e)}")
+        return JsonResponse(
+            {"status": "error", "message": f"Failed to fetch dealers for state {state}", "error": str(e)},
+            status=500
+        )
 
 def get_cars(request):
     count = CarMake.objects.filter().count()

@@ -27,9 +27,9 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 class CarMake(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
-    founded_date = models.DateField(null=True, blank=True)
-    headquarters = models.CharField(max_length=200, null=True, blank=True)
-    website = models.URLField(null=True, blank=True)
+    founded_date = models.DateField()
+    headquarters = models.CharField(max_length=200)
+    website = models.URLField()
 
     def __str__(self):
         return self.name
@@ -70,3 +70,17 @@ class CarModel(models.Model):
     class Meta:
         verbose_name = "Car Model"
         verbose_name_plural = "Car Models"
+
+
+class Dealer(models.Model):
+    full_name = models.CharField(max_length=200)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    address = models.CharField(max_length=200)
+    zip = models.CharField(max_length=10)
+    web = models.URLField()
+    lat = models.DecimalField(max_digits=9, decimal_places=6)
+    long = models.DecimalField(max_digits=9, decimal_places=6)
+
+    def __str__(self):
+        return self.full_name

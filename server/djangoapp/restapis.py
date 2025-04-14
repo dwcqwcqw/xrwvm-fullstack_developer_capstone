@@ -69,5 +69,21 @@ def post_review(data_dict):
         print(f"Network exception occurred: {str(e)}")
         return None
 
+def get_dealers_from_cf():
+    """
+    Get all dealers from the backend service
+    
+    Returns:
+        list: List of dealers or None if request fails
+    """
+    request_url = f"{backend_url}/get_dealers"
+    try:
+        response = requests.get(request_url)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Network exception occurred: {str(e)}")
+        return None
+
 # def post_review(data_dict):
 # Add code for posting review
