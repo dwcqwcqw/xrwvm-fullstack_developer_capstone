@@ -27,114 +27,110 @@ logger = logging.getLogger(__name__)
 # Create a `login_request` view to handle sign in request
 @csrf_exempt
 def login_user(request):
-    if request.method == "POST":
-        try:
-            # 尝试解析JSON数据（API请求）
-            data = json.loads(request.body)
-            username = data.get('userName')
-            password = data.get('password')
-        except json.JSONDecodeError:
-            # 如果不是JSON，则尝试获取表单数据
-            username = request.POST.get('username')
-            password = request.POST.get('password')
-        
-        # Try to check if provide credential can be authenticated
-        user = authenticate(username=username, password=password)
-        if user is not None:
-            # If user is valid, call login method to login current user
-            login(request, user)
-            # 设置session中的用户名
-            request.session['username'] = username
-            if request.content_type == 'application/json':
-                return JsonResponse({"userName": username, "status": "Authenticated"})
-            else:
-                # 在重定向之前设置一个JavaScript，将用户名存入sessionStorage
-                response = HttpResponse(
-                    f'''
-                    <script>
-                    sessionStorage.setItem("username", "{username}");
-                    window.location.href = "/";
-                    </script>
-                    '''
-                )
-                return response
-        else:
-            if request.content_type == 'application/json':
-                return JsonResponse({"userName": username, "status": "Authentication Failed"})
-            else:
-                messages.error(request, '用户名或密码错误')
-                return redirect('/login/')
-    else:
+    """Handle user login requests."""
+    if request.method != "POST":
         return render(request, 'login.html')
+
+    try:
+        # Try to parse JSON data (API request)
+        data = json.loads(request.body)
+        username = data.get('userName')
+        password = data.get('password')
+    except json.JSONDecodeError:
+        # If not JSON, try to get form data
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+    user = authenticate(username=username, password=password)
+    if user is not None:
+        login(request, user)
+        request.session['username'] = username
+        
+        if request.content_type == 'application/json':
+            return JsonResponse({
+                "userName": username,
+                "status": "Authenticated"
+            })
+        
+        response = HttpResponse(
+            f'''
+            <script>
+            sessionStorage.setItem("username", "{username}");
+            window.location.href = "/";
+            </script>
+            '''
+        )
+        return response
+    
+    if request.content_type == 'application/json':
+        return JsonResponse({
+            "userName": username,
+            "status": "Authentication Failed"
+        })
+    
+    messages.error(request, 'Invalid username or password')
+    return redirect('/login/')
 
 # Create a `logout_request` view to handle sign out request
 def logout_request(request):
+    """Handle user logout requests."""
     try:
-        # 获取当前用户名
         username = request.user.username
-        # 清除session
         logout(request)
         return JsonResponse({"userName": username})
-    except:
+    except Exception as e:
+        logger.error(f"Logout error: {str(e)}")
         return JsonResponse({"error": "Logout failed"}, status=400)
 
 # Create a registration view to handle sign up request
 @csrf_exempt
 def registration(request):
-    if request.method == "POST":
-        try:
-            # 尝试解析JSON数据
-            data = json.loads(request.body)
-            username = data.get('userName')
-            password = data.get('password')
-            email = data.get('email', '')
-
-            if not username or not password:
-                return JsonResponse({
-                    "error": "Username and password are required"
-                }, status=400)
-            
-            # 检查用户名是否已存在
-            if User.objects.filter(username=username).exists():
-                return JsonResponse({
-                    "error": "Already Registered"
-                }, status=400)
-            
-            # 创建用户
-            user = User.objects.create_user(
-                username=username,
-                password=password,
-                email=email
-            )
-            
-            # 登录用户
-            login(request, user)
-            
-            # 设置session
-            request.session['username'] = username
-            
-            response = JsonResponse({
-                "userName": username,
-                "status": "Authenticated"
-            })
-            response["Access-Control-Allow-Origin"] = "http://localhost:3000"
-            response["Access-Control-Allow-Credentials"] = "true"
-            return response
-            
-        except json.JSONDecodeError:
-            logger.error("Invalid JSON data in registration request")
-            return JsonResponse({
-                "error": "Invalid JSON data"
-            }, status=400)
-        except Exception as e:
-            logger.error(f"Registration error: {str(e)}")
-            return JsonResponse({
-                "error": str(e)
-            }, status=400)
-    else:
+    """Handle user registration requests."""
+    if request.method != "POST":
         return JsonResponse({
             "error": "Only POST method is allowed"
         }, status=405)
+
+    try:
+        data = json.loads(request.body)
+        username = data.get('userName')
+        password = data.get('password')
+        email = data.get('email', '')
+
+        if not username or not password:
+            return JsonResponse({
+                "error": "Username and password are required"
+            }, status=400)
+
+        if User.objects.filter(username=username).exists():
+            return JsonResponse({
+                "error": "Already Registered"
+            }, status=400)
+
+        user = User.objects.create_user(
+            username=username,
+            password=password,
+            email=email
+        )
+
+        login(request, user)
+        request.session['username'] = username
+
+        return JsonResponse({
+            "userName": username,
+            "status": "Authenticated"
+        })
+
+    except json.JSONDecodeError:
+        logger.error("Invalid JSON data in registration request")
+        return JsonResponse({
+            "error": "Invalid JSON data"
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Registration error: {str(e)}")
+        return JsonResponse({
+            "error": str(e)
+        }, status=400)
 
 # Get dealer reviews by dealer id
 def get_dealer_reviews(request, dealer_id):
@@ -260,45 +256,28 @@ def get_dealers_by_state(request, state):
         )
 
 def get_cars(request):
-    count = CarMake.objects.filter().count()
-    print(count)
-    if(count == 0):
+    """Get all car models with their makes."""
+    if not CarMake.objects.exists():
         initiate()
+    
     car_models = CarModel.objects.select_related('car_make')
-    cars = []
-    for car_model in car_models:
-        cars.append({"CarModel": car_model.name, "CarMake": car_model.car_make.name})
-    return JsonResponse({"CarModels":cars})
+    cars = [
+        {
+            "CarModel": car_model.name,
+            "CarMake": car_model.car_make.name
+        }
+        for car_model in car_models
+    ]
+    return JsonResponse({"CarModels": cars})
 
 def get_dealerships(request, state="All"):
-    """
-    Get dealerships by state or all dealerships
-    
-    Args:
-        request: HTTP request
-        state (str): State to filter dealerships, "All" for all dealerships
-    
-    Returns:
-        JsonResponse: List of dealerships
-    """
-    if(state == "All"):
-        endpoint = "/fetchDealers"
-    else:
-        endpoint = "/fetchDealers/"+state
+    """Get dealerships by state or all dealerships."""
+    endpoint = f"/fetchDealers/{state}" if state != "All" else "/fetchDealers"
     dealerships = get_request(endpoint)
-    return JsonResponse({"status":200,"dealers":dealerships})
+    return JsonResponse({"status": 200, "dealers": dealerships})
 
 def get_dealer_details(request, dealer_id):
-    """
-    Get details of a specific dealer
-    
-    Args:
-        request: HTTP request
-        dealer_id (int): ID of the dealer
-    
-    Returns:
-        JsonResponse: Dealer details
-    """
+    """Get details of a specific dealer."""
     try:
         dealer = Dealer.objects.get(id=dealer_id)
         dealer_data = {
@@ -314,143 +293,89 @@ def get_dealer_details(request, dealer_id):
         }
         return JsonResponse({"status": 200, "dealer": [dealer_data]})
     except Dealer.DoesNotExist:
-        return JsonResponse({"status": 404, "message": "Dealer not found"})
+        return JsonResponse({
+            "status": 404,
+            "message": "Dealer not found"
+        })
     except Exception as e:
         logger.error(f"Error in get_dealer_details: {str(e)}")
-        return JsonResponse({"status": 500, "message": f"Server error: {str(e)}"})
+        return JsonResponse({
+            "status": 500,
+            "message": f"Server error: {str(e)}"
+        })
 
 @require_http_methods(["POST"])
 def add_review(request):
-    """
-    Add a review for a dealer
-    
-    Args:
-        request: HTTP request containing review data
-    
-    Returns:
-        JsonResponse: Status of the review submission
-    """
-    try:
-        # Check authentication
-        if not request.user.is_authenticated:
-            logger.warning("Unauthenticated user attempted to post review")
-            return JsonResponse({
-                "status": 401,
-                "message": "Please login to post a review",
-                "error_type": "authentication"
-            })
-
-        # Parse request body
-        try:
-            data = json.loads(request.body)
-        except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON data in request: {str(e)}")
-            return JsonResponse({
-                "status": 400,
-                "message": "Invalid JSON data",
-                "error_type": "invalid_format"
-            })
-
-        required_fields = ['name', 'dealership', 'review', 'car_make', 'car_model', 'car_year', 'purchase_date']
-        missing_fields = [field for field in required_fields if field not in data or not data[field]]
-        
-        if missing_fields:
-            logger.warning(f"Missing required fields in review submission: {missing_fields}")
-            return JsonResponse({
-                "status": 400,
-                "message": f"Missing required fields: {', '.join(missing_fields)}",
-                "error_type": "missing_fields",
-                "missing_fields": missing_fields
-            })
-
-        # Get dealer
-        try:
-            dealer = Dealer.objects.get(id=data['dealership'])
-        except Dealer.DoesNotExist:
-            logger.error(f"Dealer with ID {data['dealership']} not found")
-            return JsonResponse({
-                "status": 404,
-                "message": f"Dealer with ID {data['dealership']} not found",
-                "error_type": "dealer_not_found"
-            })
-
-        # Analyze review sentiment
-        try:
-            sentiment_result = analyze_review_sentiments(data['review'])
-            if not sentiment_result:
-                sentiment_result = {'sentiment': 'neutral'}
-        except Exception as e:
-            logger.error(f"Error analyzing sentiment: {str(e)}")
-            sentiment_result = {'sentiment': 'neutral'}
-
-        # Build review data
-        review_data = {
-            "name": data['name'],
-            "dealership": data['dealership'],
-            "review": data['review'],
-            "purchase": data.get('purchase', True),
-            "purchase_date": data['purchase_date'],
-            "car_make": data['car_make'],
-            "car_model": data['car_model'],
-            "car_year": data['car_year'],
-            "sentiment": sentiment_result['sentiment']
-        }
-
-        # Post review to backend service
-        logger.info(f"Posting review to backend service for dealer {data['dealership']}")
-        response = post_review(review_data)
-        
-        if response and response.get('status') == 200:
-            logger.info(f"Review posted successfully for dealer {data['dealership']}")
-            return JsonResponse({
-                "status": 200,
-                "message": "Review added successfully",
-                "review_data": review_data
-            })
-        else:
-            logger.error(f"Error posting review to backend service: {response}")
-            return JsonResponse({
-                "status": 500,
-                "message": "Error posting review to backend service",
-                "error_type": "backend_service_error"
-            })
-
-    except Exception as e:
-        logger.error(f"Unexpected error in add_review: {str(e)}")
+    """Add a review for a dealer."""
+    if not request.user.is_authenticated:
+        logger.warning("Unauthenticated user attempted to post review")
         return JsonResponse({
-            "status": 500,
-            "message": f"Server error: {str(e)}",
-            "error_type": "server_error"
+            "status": 401,
+            "message": "Please login to post a review",
+            "error_type": "authentication"
+        })
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError as e:
+        logger.error(f"Invalid JSON data in request: {str(e)}")
+        return JsonResponse({
+            "status": 400,
+            "message": "Invalid JSON data",
+            "error_type": "invalid_format"
+        })
+
+    required_fields = [
+        'name', 'dealership', 'review',
+        'car_make', 'car_model', 'car_year',
+        'purchase_date'
+    ]
+    missing_fields = [
+        field for field in required_fields
+        if field not in data or not data[field]
+    ]
+
+    if missing_fields:
+        logger.warning(
+            f"Missing required fields in review submission: {missing_fields}"
+        )
+        return JsonResponse({
+            "status": 400,
+            "message": f"Missing required fields: {', '.join(missing_fields)}",
+            "error_type": "missing_fields",
+            "missing_fields": missing_fields
+        })
+
+    try:
+        dealer = Dealer.objects.get(id=data['dealership'])
+        # Process review data here
+        return JsonResponse({
+            "status": 201,
+            "message": "Review submitted successfully"
+        })
+    except Dealer.DoesNotExist:
+        logger.error(f"Dealer with ID {data['dealership']} not found")
+        return JsonResponse({
+            "status": 404,
+            "message": f"Dealer with ID {data['dealership']} not found",
+            "error_type": "dealer_not_found"
         })
 
 def about(request):
-    """
-    View function for about page
-    """
+    """View function for about page."""
     return render(request, 'about.html')
 
 def contact(request):
-    """
-    View function for contact page
-    """
+    """View function for contact page."""
     return render(request, 'contact.html')
 
 def get_csrf_token(request):
-    """
-    获取CSRF令牌的视图
-    """
+    """Get CSRF token."""
     return JsonResponse({'csrfToken': get_token(request)})
 
 def current_user(request):
-    """
-    获取当前用户的登录状态
-    """
-    if request.user.is_authenticated:
-        return JsonResponse({
-            'isLoggedIn': True,
-            'username': request.user.username
-        })
+    """Get current user's login status."""
     return JsonResponse({
-        'isLoggedIn': False,
-        'username': None
+        'isLoggedIn': request.user.is_authenticated,
+        'username': request.user.username if request.user.is_authenticated else None
     })

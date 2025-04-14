@@ -27,60 +27,39 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 class CarMake(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
-    founded_date = models.DateField()
-    headquarters = models.CharField(max_length=200)
-    website = models.URLField()
+    founded_date = models.DateField(default=now)
 
     def __str__(self):
         return self.name
 
-    class Meta:
-        verbose_name = "Car Make"
-        verbose_name_plural = "Car Makes"
-
 
 class CarModel(models.Model):
-    CAR_TYPES = [
-        ('SEDAN', 'Sedan'),
-        ('SUV', 'SUV'),
-        ('WAGON', 'Wagon'),
-        ('HATCHBACK', 'Hatchback'),
-        ('COUPE', 'Coupe'),
-        ('CONVERTIBLE', 'Convertible'),
-        ('TRUCK', 'Truck'),
-        ('VAN', 'Van'),
-    ]
-
     car_make = models.ForeignKey(CarMake, on_delete=models.CASCADE)
-    dealer_id = models.IntegerField()
     name = models.CharField(max_length=100)
-    type = models.CharField(max_length=20, choices=CAR_TYPES)
-    year = models.DateField()
-    color = models.CharField(max_length=50, null=True, blank=True)
-    engine = models.CharField(max_length=100, null=True, blank=True)
-    transmission = models.CharField(max_length=50, null=True, blank=True)
-    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    mileage = models.IntegerField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    dealer_id = models.IntegerField()
+    type = models.CharField(max_length=100)
+    year = models.IntegerField(
+        validators=[
+            MinValueValidator(1900),
+            MaxValueValidator(2100)
+        ]
+    )
 
     def __str__(self):
-        return f"{self.car_make.name} {self.name} ({self.year.year})"
-
-    class Meta:
-        verbose_name = "Car Model"
-        verbose_name_plural = "Car Models"
+        return f"{self.car_make.name} {self.name} ({self.year})"
 
 
 class Dealer(models.Model):
-    full_name = models.CharField(max_length=200)
+    id = models.IntegerField(primary_key=True)
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100)
     address = models.CharField(max_length=200)
     zip = models.CharField(max_length=10)
-    web = models.URLField()
-    lat = models.DecimalField(max_digits=9, decimal_places=6)
-    long = models.DecimalField(max_digits=9, decimal_places=6)
+    lat = models.CharField(max_length=50)
+    long = models.CharField(max_length=50)
+    short_name = models.CharField(max_length=100)
+    full_name = models.CharField(max_length=200)
+    web = models.URLField(max_length=200, blank=True, null=True)
 
     def __str__(self):
-        return self.full_name
+        return f"{self.full_name} ({self.city}, {self.state})"
