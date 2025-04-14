@@ -4,12 +4,10 @@ import os
 from dotenv import load_dotenv
 import requests
 import json
-from django.conf import settings
-from . import credentials
 
 load_dotenv()
 
-# Backend API base URL
+# Get backend API URL from environment variables
 backend_url = os.environ.get('BACKEND_URL', 'http://localhost:3000')
 
 # Sentiment analyzer service URL

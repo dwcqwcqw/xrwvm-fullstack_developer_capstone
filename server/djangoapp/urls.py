@@ -31,7 +31,7 @@ urlpatterns = [
     path('contact/', views.contact, name='contact'),
 
     # path for dealer reviews view
-    path('reviews/dealer/<int:dealer_id>/', views.get_dealer_reviews, name='dealer_details'),
+    path('reviews/dealer/<int:dealer_id>/', views.get_dealer_reviews, name='dealer_reviews'),
 
     # path for get dealers
     path('get_dealers/', views.get_dealerships, name='get_dealers'),

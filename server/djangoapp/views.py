@@ -238,3 +238,15 @@ def add_review(request):
             return JsonResponse({"status": 401, "message": "Error in posting review"})
     else:
         return JsonResponse({"status": 403, "message": "Unauthorized"})
+
+def about(request):
+    """
+    View function for about page
+    """
+    return render(request, 'about.html')
+
+def contact(request):
+    """
+    View function for contact page
+    """
+    return render(request, 'contact.html')
