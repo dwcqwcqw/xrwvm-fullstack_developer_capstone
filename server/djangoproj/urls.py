@@ -22,8 +22,15 @@ from django.contrib.auth import views as auth_views
 from djangoapp import views as app_views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('djangoapp/', include('djangoapp.urls')),
+    path(
+        'admin/',
+        admin.site.urls
+    ),
+    path(
+        'djangoapp/',
+        include('djangoapp.urls'),
+        name='djangoapp'
+    ),
     path('api/', include('djangoapp.urls')),
     path('', TemplateView.as_view(template_name="index.html")),
     path('about', TemplateView.as_view(template_name="index.html")),
@@ -39,5 +46,11 @@ urlpatterns = [
 ]
 
 # Add static and media file serving
-urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += static(
+    settings.STATIC_URL,
+    document_root=settings.STATIC_ROOT
+)
+urlpatterns += static(
+    settings.MEDIA_URL,
+    document_root=settings.MEDIA_ROOT
+)

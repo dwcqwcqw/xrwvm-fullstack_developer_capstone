@@ -1,4 +1,3 @@
-import json
 from .models import CarDealer
 
 
@@ -46,4 +45,4 @@ def populate():
     for dealer in dealers_data:
         CarDealer.objects.create(**dealer)
 
-    print("Database populated with dealer data successfully.") 
+    print("Database populated with dealer data successfully.\n") 
