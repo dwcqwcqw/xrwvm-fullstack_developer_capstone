@@ -10,6 +10,8 @@ urlpatterns = [
     path('login/', views.login_user, name='api_login'),
     path('logout/', views.logout_request, name='logout'),
     path('register/', views.registration, name='register'),
+    path('get-csrf-token/', views.get_csrf_token, name='get_csrf_token'),
+    path('current_user/', views.current_user, name='current_user'),
     
     # Dealer paths
     path('get_dealers', views.get_dealers, name='get_dealers'),

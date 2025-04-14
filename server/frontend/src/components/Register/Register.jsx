@@ -18,12 +18,17 @@ const Register = () => {
     setError("");
     setLoading(true);
 
+    if (!userName || !password || !email) {
+      setError("Please fill in all fields");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("/djangoapp/register/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json"
         },
         body: JSON.stringify({
           userName,
@@ -32,27 +37,31 @@ const Register = () => {
         }),
       });
 
-      if (!res.ok) {
+      let data;
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
         const text = await res.text();
-        console.error('Registration failed:', text);
-        throw new Error(`Registration failed: ${res.status} ${res.statusText}`);
+        throw new Error(text || 'Server error');
       }
-
-      const data = await res.json();
-      if (data.status === "Authenticated") {
+      
+      if (res.ok && data.status === "Authenticated") {
         sessionStorage.setItem('username', data.userName);
         navigate('/');
         window.location.reload();
       } else {
         if (data.error === "Already Registered") {
           setError("This username is already registered. Please try another one.");
+        } else if (data.error) {
+          setError(data.error);
         } else {
-          setError(data.error || "Registration failed. Please try again.");
+          setError("Registration failed. Please try again.");
         }
       }
     } catch (err) {
       console.error('Error:', err);
-      setError("An error occurred during registration. Please try again later.");
+      setError(err.message || "An error occurred during registration. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -60,67 +69,71 @@ const Register = () => {
 
   return (
     <div className="register-container">
-      <div className="register-box">
+      <div className="register-header">
         <h2>Create Account</h2>
-        <p className="subtitle">Please fill in the details to register</p>
+        <p>Please fill in the details to register</p>
+      </div>
 
-        {error && (
-          <div className="alert alert-danger" role="alert">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={register}>
-          <div className="input-group">
-            <img src={user_icon} alt="Username" className="input-icon" />
-            <input
-              type="text"
-              placeholder="Username"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              required
-              className="form-input"
-              minLength="3"
-            />
-          </div>
-
-          <div className="input-group">
-            <img src={email_icon} alt="Email" className="input-icon" />
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="form-input"
-            />
-          </div>
-
-          <div className="input-group">
-            <img src={password_icon} alt="Password" className="input-icon" />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="form-input"
-              minLength="6"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="register-button"
-            disabled={loading}
-          >
-            {loading ? 'Creating Account...' : 'Create Account'}
-          </button>
-        </form>
-
-        <div className="login-link">
-          Already have an account? <a href="/login">Sign in</a>
+      {error && (
+        <div className="error-message">
+          <i className="fas fa-exclamation-circle"></i>
+          {error}
         </div>
+      )}
+
+      <form onSubmit={register} className="register-form">
+        <div className="form-group">
+          <label htmlFor="username">Username</label>
+          <i className="fas fa-user"></i>
+          <input
+            type="text"
+            id="username"
+            placeholder="Enter your username"
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
+            required
+            minLength="3"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="email">Email</label>
+          <i className="fas fa-envelope"></i>
+          <input
+            type="email"
+            id="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="password">Password</label>
+          <i className="fas fa-lock"></i>
+          <input
+            type="password"
+            id="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength="6"
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="register-btn"
+          disabled={loading}
+        >
+          {loading ? 'Creating Account...' : 'Create Account'}
+        </button>
+      </form>
+
+      <div className="login-link">
+        Already have an account? <a href="/login">Sign in</a>
       </div>
     </div>
   );

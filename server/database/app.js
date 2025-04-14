@@ -1,21 +1,28 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const fs = require('fs');
-const  cors = require('cors')
+const cors = require('cors')
 const app = express()
 const port = 3030;
 
-app.use(cors())
-app.use(require('body-parser').urlencoded({ extended: false }));
+// 配置CORS
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:8000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRFToken'],
+  credentials: true
+}));
+
+// 配置body-parser
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const reviews_data = JSON.parse(fs.readFileSync("reviews.json", 'utf8'));
 const dealerships_data = JSON.parse(fs.readFileSync("dealerships.json", 'utf8'));
 
 mongoose.connect("mongodb://mongo_db:27017/",{'dbName':'dealershipsDB'});
 
-
 const Reviews = require('./review');
-
 const Dealerships = require('./dealership');
 
 try {
@@ -90,29 +97,40 @@ app.get('/fetchDealer/:id', async (req, res) => {
 });
 
 //Express route to insert review
-app.post('/insert_review', express.raw({ type: '*/*' }), async (req, res) => {
-  data = JSON.parse(req.body);
-  const documents = await Reviews.find().sort( { id: -1 } )
-  let new_id = documents[0]['id']+1
-
-  const review = new Reviews({
-		"id": new_id,
-		"name": data['name'],
-		"dealership": data['dealership'],
-		"review": data['review'],
-		"purchase": data['purchase'],
-		"purchase_date": data['purchase_date'],
-		"car_make": data['car_make'],
-		"car_model": data['car_model'],
-		"car_year": data['car_year'],
-	});
-
+app.post('/insert_review', async (req, res) => {
   try {
+    const data = req.body;
+    console.log('Received review data:', data);
+
+    const documents = await Reviews.find().sort({ id: -1 });
+    let new_id = documents.length > 0 ? documents[0]['id'] + 1 : 1;
+
+    const review = new Reviews({
+      "id": new_id,
+      "name": data.name,
+      "dealership": data.dealership,
+      "review": data.review,
+      "purchase": data.purchase,
+      "purchase_date": data.purchase_date,
+      "car_make": data.car_make,
+      "car_model": data.car_model,
+      "car_year": data.car_year,
+    });
+
     const savedReview = await review.save();
-    res.json(savedReview);
+    console.log('Saved review:', savedReview);
+    res.status(200).json({
+      status: 200,
+      message: "Review added successfully",
+      review: savedReview
+    });
   } catch (error) {
-		console.log(error);
-    res.status(500).json({ error: 'Error inserting review' });
+    console.error('Error saving review:', error);
+    res.status(500).json({
+      status: 500,
+      error: 'Error inserting review',
+      message: error.message
+    });
   }
 });
 

@@ -15,6 +15,7 @@ from .populate import initiate
 from .populate_dealers import populate_dealers
 from .restapis import get_request, analyze_review_sentiments, post_review, get_dealers_from_cf
 from django.views.decorators.http import require_http_methods
+from django.middleware.csrf import get_token
 
 
 # Get an instance of a logger
@@ -83,16 +84,10 @@ def registration(request):
     if request.method == "POST":
         try:
             # 尝试解析JSON数据
-            if request.content_type == 'application/json':
-                data = json.loads(request.body)
-                username = data.get('userName')
-                password = data.get('password')
-                email = data.get('email', '')
-            else:
-                # 处理表单数据
-                username = request.POST.get('username')
-                password = request.POST.get('password')
-                email = request.POST.get('email', '')
+            data = json.loads(request.body)
+            username = data.get('userName')
+            password = data.get('password')
+            email = data.get('email', '')
 
             if not username or not password:
                 return JsonResponse({
@@ -118,10 +113,13 @@ def registration(request):
             # 设置session
             request.session['username'] = username
             
-            return JsonResponse({
+            response = JsonResponse({
                 "userName": username,
                 "status": "Authenticated"
             })
+            response["Access-Control-Allow-Origin"] = "http://localhost:3000"
+            response["Access-Control-Allow-Credentials"] = "true"
+            return response
             
         except json.JSONDecodeError:
             logger.error("Invalid JSON data in registration request")
@@ -150,16 +148,31 @@ def get_dealer_reviews(request, dealer_id):
     Returns:
         JsonResponse: List of reviews with sentiment analysis
     """
-    if(dealer_id):
-        endpoint = "/fetchReviews/dealer/"+str(dealer_id)
-        reviews = get_request(endpoint)
-        for review_detail in reviews:
+    endpoint = f"/fetchReviews/dealer/{dealer_id}"
+    reviews = get_request(endpoint)
+
+    if reviews is None:
+        logger.error(f"Failed to fetch reviews for dealer {dealer_id} from backend service.")
+        return JsonResponse({"status": 500, "message": "Failed to fetch reviews from backend service"})
+
+    if not isinstance(reviews, list):
+        logger.error(f"Unexpected response format for reviews from backend service: {reviews}")
+        return JsonResponse({"status": 500, "message": "Unexpected response format for reviews"})
+
+    # Initialize sentiment analysis results list
+    reviews_with_sentiment = []
+
+    # Perform sentiment analysis for each review
+    for review_detail in reviews:
+        try:
             response = analyze_review_sentiments(review_detail['review'])
-            print(response)
-            review_detail['sentiment'] = response['sentiment']
-        return JsonResponse({"status":200,"reviews":reviews})
-    else:
-        return JsonResponse({"status":400,"message":"Bad Request"})
+            review_detail['sentiment'] = response.get('sentiment', 'neutral')  # Default to neutral if analysis fails
+        except Exception as e:
+            logger.error(f"Error analyzing sentiment for review {review_detail.get('id')}: {str(e)}")
+            review_detail['sentiment'] = 'neutral'  # Default to neutral on error
+        reviews_with_sentiment.append(review_detail)
+    
+    return JsonResponse({"status": 200, "reviews": reviews_with_sentiment})
 
 # Get all dealers
 @require_http_methods(["GET"])
@@ -286,14 +299,27 @@ def get_dealer_details(request, dealer_id):
     Returns:
         JsonResponse: Dealer details
     """
-    if(dealer_id):
-        endpoint = "/fetchDealer/"+str(dealer_id)
-        dealership = get_request(endpoint)
-        return JsonResponse({"status":200,"dealer":dealership})
-    else:
-        return JsonResponse({"status":400,"message":"Bad Request"})
+    try:
+        dealer = Dealer.objects.get(id=dealer_id)
+        dealer_data = {
+            "id": dealer.id,
+            "full_name": dealer.full_name,
+            "city": dealer.city,
+            "state": dealer.state,
+            "address": dealer.address,
+            "zip": dealer.zip,
+            "web": dealer.web,
+            "lat": float(dealer.lat),
+            "long": float(dealer.long)
+        }
+        return JsonResponse({"status": 200, "dealer": [dealer_data]})
+    except Dealer.DoesNotExist:
+        return JsonResponse({"status": 404, "message": "Dealer not found"})
+    except Exception as e:
+        logger.error(f"Error in get_dealer_details: {str(e)}")
+        return JsonResponse({"status": 500, "message": f"Server error: {str(e)}"})
 
-@csrf_exempt
+@require_http_methods(["POST"])
 def add_review(request):
     """
     Add a review for a dealer
@@ -304,21 +330,98 @@ def add_review(request):
     Returns:
         JsonResponse: Status of the review submission
     """
-    if request.user.is_anonymous == False:
+    try:
+        # Check authentication
+        if not request.user.is_authenticated:
+            logger.warning("Unauthenticated user attempted to post review")
+            return JsonResponse({
+                "status": 401,
+                "message": "Please login to post a review",
+                "error_type": "authentication"
+            })
+
+        # Parse request body
         try:
             data = json.loads(request.body)
-            response = post_review(data)
-            if response:
-                return JsonResponse({"status": 200, "message": "Review added successfully"})
-            else:
-                return JsonResponse({"status": 401, "message": "Error in posting review"})
-        except json.JSONDecodeError:
-            return JsonResponse({"status": 400, "message": "Invalid JSON data"})
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON data in request: {str(e)}")
+            return JsonResponse({
+                "status": 400,
+                "message": "Invalid JSON data",
+                "error_type": "invalid_format"
+            })
+
+        required_fields = ['name', 'dealership', 'review', 'car_make', 'car_model', 'car_year', 'purchase_date']
+        missing_fields = [field for field in required_fields if field not in data or not data[field]]
+        
+        if missing_fields:
+            logger.warning(f"Missing required fields in review submission: {missing_fields}")
+            return JsonResponse({
+                "status": 400,
+                "message": f"Missing required fields: {', '.join(missing_fields)}",
+                "error_type": "missing_fields",
+                "missing_fields": missing_fields
+            })
+
+        # Get dealer
+        try:
+            dealer = Dealer.objects.get(id=data['dealership'])
+        except Dealer.DoesNotExist:
+            logger.error(f"Dealer with ID {data['dealership']} not found")
+            return JsonResponse({
+                "status": 404,
+                "message": f"Dealer with ID {data['dealership']} not found",
+                "error_type": "dealer_not_found"
+            })
+
+        # Analyze review sentiment
+        try:
+            sentiment_result = analyze_review_sentiments(data['review'])
+            if not sentiment_result:
+                sentiment_result = {'sentiment': 'neutral'}
         except Exception as e:
-            logger.error(f"Error in add_review: {str(e)}")
-            return JsonResponse({"status": 401, "message": "Error in posting review"})
-    else:
-        return JsonResponse({"status": 403, "message": "Unauthorized"})
+            logger.error(f"Error analyzing sentiment: {str(e)}")
+            sentiment_result = {'sentiment': 'neutral'}
+
+        # Build review data
+        review_data = {
+            "name": data['name'],
+            "dealership": data['dealership'],
+            "review": data['review'],
+            "purchase": data.get('purchase', True),
+            "purchase_date": data['purchase_date'],
+            "car_make": data['car_make'],
+            "car_model": data['car_model'],
+            "car_year": data['car_year'],
+            "sentiment": sentiment_result['sentiment']
+        }
+
+        # Post review to backend service
+        logger.info(f"Posting review to backend service for dealer {data['dealership']}")
+        response = post_review(review_data)
+        
+        if response and response.get('status') == 200:
+            logger.info(f"Review posted successfully for dealer {data['dealership']}")
+            return JsonResponse({
+                "status": 200,
+                "message": "Review added successfully",
+                "review_data": review_data
+            })
+        else:
+            logger.error(f"Error posting review to backend service: {response}")
+            return JsonResponse({
+                "status": 500,
+                "message": "Error posting review to backend service",
+                "error_type": "backend_service_error"
+            })
+
+    except Exception as e:
+        logger.error(f"Unexpected error in add_review: {str(e)}")
+        return JsonResponse({
+            "status": 500,
+            "message": f"Server error: {str(e)}",
+            "error_type": "server_error"
+        })
 
 def about(request):
     """
@@ -331,3 +434,23 @@ def contact(request):
     View function for contact page
     """
     return render(request, 'contact.html')
+
+def get_csrf_token(request):
+    """
+    获取CSRF令牌的视图
+    """
+    return JsonResponse({'csrfToken': get_token(request)})
+
+def current_user(request):
+    """
+    获取当前用户的登录状态
+    """
+    if request.user.is_authenticated:
+        return JsonResponse({
+            'isLoggedIn': True,
+            'username': request.user.username
+        })
+    return JsonResponse({
+        'isLoggedIn': False,
+        'username': None
+    })
