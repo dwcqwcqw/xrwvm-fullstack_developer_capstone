@@ -1,0 +1,17 @@
+.navbar {
+  margin-bottom: 2rem;
+}
+
+.navbar-brand {
+  font-weight: bold;
+}
+
+.nav-link {
+  padding: 0.5rem 1rem;
+}
+
+.nav-link:hover {
+  color: #fff !important;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 0.25rem;
+} 

@@ -1,0 +1,46 @@
+.about-content {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #f8f9fa;
+  border-radius: 0.3rem;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.lead {
+  font-size: 1.25rem;
+  font-weight: 300;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.about-section {
+  margin-bottom: 2rem;
+}
+
+h3 {
+  color: #007bff;
+  margin-bottom: 1rem;
+}
+
+ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+li {
+  margin-bottom: 0.5rem;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+li:before {
+  content: "✓";
+  color: #28a745;
+  position: absolute;
+  left: 0;
+} 
