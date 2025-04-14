@@ -1,0 +1,15 @@
+{
+    "esversion": 8,
+    "node": true,
+    "asi": true,
+    "laxbreak": true,
+    "laxcomma": true,
+    "undef": true,
+    "unused": true,
+    "sub": true,
+    "expr": true,
+    "globals": {
+        "Promise": true,
+        "console": true
+    }
+} 
